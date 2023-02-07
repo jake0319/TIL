@@ -401,4 +401,7 @@ print(result)
 출처:
 
 [이것이 취업을위한 코딩테스트다_나동빈 저]
+
+<br>
+
 [파이썬 이터러블](https://sikaleo.tistory.com/61)
