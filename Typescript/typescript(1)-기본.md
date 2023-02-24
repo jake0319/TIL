@@ -177,12 +177,13 @@ function add(x,y) {
 let a = 123;
 a = 'hello' as unknown as number
 ```
+- `unknown`은 잠시 타입 추론을 미루는(알 수 없는 타입임을 명시) 작업이므로 추후 `if문 내로잉` 또는 `as unknown as some_Type` 으로 타입 지정을 다시 해줘야함.
 
 
 <br> 
 
 
-# never 타입 & non-null assertion 
+# never 타입 & non-null assertion
 
 ## non-null assertion
 ```ts
@@ -191,6 +192,7 @@ const head = document.querySelector('#head')!;
 - `!`: non-null assertion
 - head태그가 기본적으론 Element|null 타입인데 null(undefined)이 아님을 보증함 
 - 추천하지 않는 방식이므로 `if문으로 타입 내로잉하기`
+- 타입체커에 null 또는 undefined가 아님을 알려주는 방식
 
 ## never타입
 ```ts
@@ -212,6 +214,8 @@ try {
 
 ## 템플릿 리터럴 타입
 - 타입도 자바스크립트처럼 템플릿리터럴이 가능하다.
+- 타입을 `명확한 값`으로 할당해서 지정한 '값'으로만 받을 수 있음을 명시
+
 ```ts
 type World = 'world';
 Const a:World = 'world';
@@ -262,6 +266,7 @@ const c = EDirection.Left;
 - `enum`: 임의의 숫자나 문자열을 할당할 수 있으며, 하나의 그룹으로 묶고싶을 때 사용한다.
 [Enum에 대한 설명글](#https://joshua1988.github.io/ts/guide/enums.html#%EC%9D%B4%EB%84%98-enums)
 - 숫자형(:auto incrementing), 문자형(:리버스맵핑) , 혼합형 enum 등이 가능 
+
 > BUT! enum은 ts의 문법이므로 트리쉐이킹이 되지 않는다 -> 번들링시 포함되므로 쓰지 않는 것이 좋다.
  대신 Union type 사용을 권장 ( Union Type > const enum > enum )
 [Enum을 지양해야하는 이유](#https://engineering.linecorp.com/ko/blog/typescript-enum-tree-shaking)
@@ -284,7 +289,9 @@ const ODirection: {
     readonly Left: 2;
     readonly Right: 3;
 }
-- 객체선언 뒤에 `as const`붙이면 각 속성이 `readonly`인 `리터럴타입`을 생성해줌. // 각 속성에 값 자체로 타입이 할당됨.
+```
+- 객체선언 뒤에 `as const`붙이면 각 속성이 `readonly`인 `리터럴타입`을 생성해줌. 
+// 각 속성에 값 자체로 타입이 할당됨.
 
 
 
@@ -294,38 +301,40 @@ const ODirection: {
 ## keyof
 - `타입`의 key속성값만 뽑아서 새로운 타입으로 만들고싶을 때 사용
 
-## keyof + typeof
+## keyof & typeof
+
 ```ts
-type Direction = typeof ODirection[keyof typeof ODirection];
+type Direction = typeof ODirection[keyof typeof ODirection]
 ```
-> ODirection객체(값) '타입'을 `typeof`으로 뽑아내서 타입생성하고, 해당 타입의 key속성값을 `keyof`뽑아내서  
-해당 타입으로 만들고 =>  'Up'|'Down'|'Left'| 'Right' (type)
-이것을 ODirection객체의 [computed property]형태로 참조
-( ODirection[keyof typeof ODirection];)
-// 1 | 2 | 3 | 4  (아직은 객체 참조값)
+1. ODirection객체(리터럴값)의 '타입'을 typeof 으로 뽑아내고
+2. 해당 타입의 key속성값들을 keyof으로 뽑아내서  
+3. 해당 객체의 키값들을 유니온 타입으로 만들고 =>  `'Up'|'Down'|'Left'| 'Right'`(type)
+4. 이것을 ODirection객체의 [computed property]형태로 참조
+//( ODirection[keyof typeof ODirection];
+// 1 | 2 | 3 | 4  (아직은 객체의 참조값에 불과, 타입이아님)
 이것을 다시 typeof키워드로 타입으로 만들면 
-type Direction ///... 1 | 2 | 3 | 4 
+5. type Direction =  `1 | 2 | 3 | 4` ( 유니온타입 생성)
 
 
 
 <br>
 
-
-
 # Union(|)과 Intersection(&)
 
 ## 간단하게 타입을 선언하고싶다면? Type Aliasing
+- type키워드로 선언한 타입은 변수처럼 할당할 수 있다.
 ```ts
 type A = { a :string };
 const a: A = { a : 'hello' };
-//const a:{ a: string } = { a : 'hello' };
+// const a:{ a: string } = { a : 'hello' };
 ```
 
 ## 상속(extends),구현(implement)와 같은 객체지향 프로그래밍을 하고싶다면? Interface
 - interface는 class처럼 {}중괄호로 선언한다.
+- interface는 타입과 마찬가지로 `객체의 타입의 이름을 지정`하는 또 다른 방법이다.
 ```ts 
-interface B{ a : string };
-const b: B = { a: 'hello'};
+interface B { a : string };
+const b: B = { a: 'hello' };
 ```
 
 ## Union(|)타입 
@@ -404,6 +413,7 @@ type B = { age: number };
 type newAB = A | B ;
 // type newAB는 A와B보다 넓은 타입
 type C = A & B ; 
+// intersection(&)은 객체type을 합쳐준다 -> A,B타입의 속성을 모두 만족하는 객체타입 생성
 // type C는 A와,B보다 좁은 타입
 
 const newC : C = { name : 'jake', age: 29};
@@ -428,7 +438,7 @@ const c: C = { name: string , age: number, married: false}
 # void 사용법
 
 ## 함수선언문의 void 
-- 리턴타입이 `void`면 리턴값이 존재하면안된다
+- 리턴타입이 `void`면 리턴값이 존재하면안된다!
 - (null: X , undefined: O)
 
 ## interface로 선언한 메서드의 () => `void`
@@ -439,6 +449,7 @@ interface A {
 }
 const a: A ={
    talk() { return 3; } ///에러가나지 않음, return을 무시 
+   // 리턴값이 void이므로 존재하더라도 return값을 무시해서 사용하지 않는다.
 }
 ```
 
@@ -446,22 +457,60 @@ const a: A ={
 - 존재하지 않음이 아니라 사용하지 않는다의 의미(리턴값이 있어도 봐줌)
 - 호출부에 넣는 콜백함수의 리턴값이 존재해도 에러 발생하지 않음.
 ```ts
-declare function forEach(arr: number[], callback: (el: number)=> void: void;
+declare function forEach(arr: number[], callback: (el: number)=> void ): void;
+// 함수 구현부 없이 타입만 작성하고 싶을 때(declare), forEach같은 내장메서드에 적용
+// forEach는 리턴값이 없이 배열요소에 특정작업(콜백)을 순회하며 반복하기만 하므로 void 리턴
 
 let target: number[] = [];
 forEach([1,2,3], el => { target.push(el)});
 forEach([1,2,3], el => target.push(el));
 ```
 
+<br>
 
 ## declare 키워드
+> 이는 TypeScript로 작성하지 않은 코드의 타입 정보를 컴파일러에게 알려주는 선언이다.  
+대게 외부 사용자에게 내가 만든 라이브러리의 타입 정보를 알려줄 목적으로 d.ts 파일을 정의할 때 Ambient Declaration을 이용한다.  
+Ambient Declaration을 작성할 때 declare 키워드를 사용한다.
 - 다른 ts파일에서 선언된 타입임을 보장하는 키워드
 - 선언하지 않은 함수를 사용하기위해 붙여준다.
 > 원래 `function 변수명(파라미터타입):리턴타입`형태로 타입만 선언해두면
 바로 밑에 함수선언을 해줘야 에러가 나지 않음.
 하지만 declare키워드를 쓰면 타입선언만 해도 에러를 방지.
 
+<br>
 
+### 타입스크립트 선언 파일
+> 타입스크립트 선언 파일 `d.ts`는 타입스크립트 코드의 타입 추론을 돕는 파일입니다.   
+예를 들어, 전역 변수로 선언한 변수를 특정 파일에서 import 구문 없이 사용하는 경우 해당 변수를 인식하지 못합니다.    
+그럴 때 아래와 같이 해당 변수를 선언해서 에러가 나지 않게 할 수 있습니다.
+
+  `declare const global = 'sth';`
+// declare로 선언한 변수는 해당 파일에서 전역변수 처럼 인식한다 .
+
+<br>
+
+### 전역 변수와 전역 함수에 대한 타입 선언
+- 해당 타입스크립트 파일에서 사용할 순 있지만 선언되어 있지 않은 전역 변수나 전역 함수는 아래와 같이 타입을 선언할 수 있다.
+
+// **전역 변수**  
+
+`declare const pi = 3.14;`
+
+// __전역 함수__
+```ts
+declare namespace myLib {
+  function greet(person: string): string;
+  let name: string;
+}
+myLib.greet('캡틴');
+myLib.name = '타노스';
+```
+TIP
+> Use declare namespace to describe types or values accessed by dotted notation.
+
+
+<br>
 <br>
 
 
@@ -628,7 +677,8 @@ aaaa.a = '123'; ///readonly로 인해 재할당 불가
  //위,아래는 동치 
 
  type indexedA = { [key: string]: string}
- // 객체의 어떤key값이던 전부 string이고 그 값도 string이다.를 의미 
+ // 객체의 어떤key값이던 전부 string이고 그 값도 string이다.를 의미한다. 
+ // 모든 key값과 value값의 타입형태를 대략적으로 지정한다.
 
 ```
 
@@ -642,6 +692,7 @@ const newB = { Human: 123, Mammal: 5, Animal: 7}
 type newC = { [key in BB]: B };
 ```
 - cf.) interface로는 | (또는)문법을 사용할 수 없다.
+// Interface문법은 유니온타입이 불가(대신 여러번 선언을 통한 오버라이딩 또는 extends상속으로 확장가능함.)
 
 
 
@@ -654,6 +705,7 @@ type newC = { [key in BB]: B };
 ## 객체지향문법
 - 객체지향문법을 위한 private,proteted,static 등의 키워드 사용가능
 - constructor에 선언한 변수는 생성자메서드 이전에 타입 초기화가 필요하다.
+
 ```ts
 class A {
   a: string;
@@ -663,18 +715,18 @@ class A {
 	this.b = b;
   }
 ```
-
 - 그렇지않으면 타입 및 변수 초기화를 같이 진행해줘야함.
 - new class명()를 통한 속성의 동적인 생성을 원하지 않는다면 constructor 생략 가능.
+- //cf.클래스는 객체 복사기
 ```ts
 class A {
   a: string = '123'
   b: number = 123 ///... 인스턴스에 복제된다.
   }
 ```
-- priviate키워드가 붙은 메서드/프로퍼티는 클래스명을 통한 속성의 참조/호출 가능, 인스턴스로 참조/호출 불가능 함.
-- protected는 extends한 클래스에서도 부모클래스 속성의 참조/호출을 가능하게해줌
--  static키워드는 특정 속성을 자식요소에 유전할지 말지를 결정한다.
+- `priviate`키워드가 붙은 메서드/프로퍼티는 클래스명을 통한 속성의 참조/호출 가능, 인스턴스로 참조/호출 불가능 함.
+- `protected`는 extends한 클래스에서도 부모클래스 속성의 참조/호출을 가능하게해줌
+-  `static`키워드는 특정 속성을 자식요소에 물려줄지 말지를 결정한다.
 ```ts
 class newA2{
   public method(){ const aaaa = 'bb'}
@@ -687,7 +739,7 @@ insA2.props
 ```
 
 ## implements, abstract
-`class B implements A(인터페이스)`
+`class B implements A(인터페이스)` //B는 A를 구현한다(모양을 따른다).
 - 클래스B는 인터페이스A를 따라야한다.(내부 속성의 타입을 따라야함.)
 - 클래스의 모양을 interface로 통제할 수있다.
 
@@ -743,13 +795,20 @@ add(1,2) /// T: number로 확정
 add('1','2') ///T: string으로 확정
 ```
 
-## 제네릭변수를 extends로 제한하기
+## 제네릭에서 extends는 왼쪽을 오른쪽으로 '제한'한다는 의미 (=왼쪽이 오른쪽에 할당가능하다는 의미)
+> 제네릭은 사용하는 시점에 타입을 결정해줌으로써 사실상 아무 타입이나 집어넣어도 상관 없다.  
+이렇게 입력값에 대한 유연성을 확보했지만 각 함수에 대해 사용처에 따라서 입력값을 제한 할 필요가 생긴다. 
+//cf.) 클래스에서 extends가 왼쪽(자식)클래스가 오른쪽(부모)클래스 상속한 확장클래스라는 것과 대비된다
+
+
 - 제네릭의 extends는 `왼쪽을 오른쪽으로 제한`의 의미를 갖는다.
-제네릭함수 호출시 넣을 수 있는 T값의 타입은 number로 제한된다.
 `function add<T extends number>()`
+//제네릭함수 호출시 넣을 수 있는 T값의 타입은 number로 제한된다.
+//만약 <T extends K> 형태의 제네릭이 있다면, T가 K에 할당 가능해야 한다 라고 정의하면 된다.
 
 ## 여러 제네릭을 각각 제한할 수 있다.
 `<T extends number, K extends string>`
+- 제네릭의 타입을 오른쪽으로 제한
 
 ## 제네릭 제한의 여러 형태
 >
@@ -764,10 +823,150 @@ add('1','2') ///T: string으로 확정
  `add<T extends abstract new (...args: any)=> any>`
   add(A)
 
+### 제네릭문법의 위치
+>꺾쇠 <> 기호를 변수명, 함수명 `앞에다 쓰면 '타입 단언'` 이 되게 된다.    
+따라서 `제네릭을 구현하려면 변수명, 함수명 뒤에다가`꺾쇠 괄호를 적어주어야 한다.  
+그리고 제네릭명은 꼭 T가 아니어도 된다.  
+내마음대로 붙일수는 있지만 관습적으로 대문자 알파벳 한글자로 처리하는 편이다. (T, U, K ...)  
 
+<br>
+
+// __인수들을 받아서 배열로 만들어주는 메소드__
+```ts
+function toArray<T>(a: T, b: T): T[] {
+   return [a, b];
+}
+```
+
+// __만약 화살표 함수로 제네릭을 표현한다면 다음과 같이 된다.__
+```ts
+const toArray2 = <T>(a: T, b: T): T[] => { ... }
+```
+- 변수명 뒤에 꺾쇠를 적어준다, 다만 함수표현식형태이므로 부등호를 넘어서 파라미터 앞에 `<T>`를 적어준다.
+
+<br>
+
+### 제네릭 주의사항
+- 인수를 배열로 받을 경우 `T[],  Array[T]`와 같은 형태로 처리한다.
+//  T[]와 Array<T>는 같다.
+```ts
+function loggingIdentity<T>(arg: T[]): T[] {
+   console.log(arg.length); // 배열은 .length를 가지고 있다. 따라서 오류는 없다.
+   return arg; // 배열을 반환
+}
+
+function loggingIdentity2<T>(arg: Array<T>): Array<T> {
+   console.log(arg.length);
+   return arg;
+}
+
+loggingIdentity([1, 2, 3]);
+loggingIdentity2([1, 2, 3]);
+```
+
+<br>
+
+### 제네릭과 interface & type
+- __inteface with Generic__
+```ts
+interface Mobile<T> { 
+   name: string;
+   price: number;
+   option: T; // 제네릭 타입 - option 속성에는 다양한 데이터 자료가 들어온다고 가정
+}
+
+// 제네릭 자체에 리터럴 객테 타입도 할당 할 수 있다.
+const m1: Mobile<{ color: string; coupon: boolean }> = {
+   name: 's21',
+   price: 1000,
+   option: { color: 'read', coupon: false }, // 제네릭 타입의 의해서 option 속성이 유연하게 타입이 할당됨
+};
+
+const m2: Mobile<string> = {
+   name: 's20',
+   price: 900,
+   option: 'good', // 제네릭 타입의 의해서 option 속성이 유연하게 타입이 할당됨
+};
+```
+
+<br>
+
+- __type alias with Generic__
+```ts
+type TG<T> = T[] | T;
+
+const number_arr: TG<number> = [1, 2, 3, 4, 5];
+const number_arr2: TG<number> = 12345;
+
+const string_arr: TG<string> = ['1', '2', '3', '4', '5'];
+const string_arr2: TG<string> = '12345';
+```
+
+<br>
+<br>
+
+### 제네릭 함수타입 
+- __인터페이스로 함수 타입을 지정__
+```ts
+interface Add {
+   (x: number, y: number): number;
+}
+
+let myFunc: Add = (x, y) => {
+   return x + y;
+};
+```
+
+- __다른 방식으로 아예 함수를 할당할때 제네릭을 결정하는 방식__
+```ts
+interface GenericIdentityFn<T> {
+   (arg: T): T;
+}
+
+function identity<T>(arg: T): T {
+   return arg;
+}
+
+let myIdentity: GenericIdentityFn<number> = identity;
+let myIdentity2: GenericIdentityFn<string> = identity;
+
+myIdentity(100);
+myIdentity2('100');
+```
+
+<br>
+
+### 제네릭 클래스 타입
+- 클래스는 그자체로 인스턴스의 타입이 될 수 있다.
+```ts
+class GenericNumber<T> {
+   zeroValue: T;
+   add: (x: T, y: T) => T;
+
+   constructor(v: T, cb: (x: T, y: T) => T) {
+      this.zeroValue = v;
+      this.add = cb;
+   }
+}
+
+let myGenericNumber = new GenericNumber<number>(0, (x, y) => {
+   return x + y;
+});
+
+let myGenericString = new GenericNumber<string>('0', (x, y) => {
+   return x + y;
+});
+
+myGenericNumber.zeroValue; // 0
+myGenericNumber.add(1, 2); // 3
+
+myGenericString.zeroValue; // '0'
+myGenericString.add('hello ', 'world'); // 'hello world'
+```
 
 
 <br>
+
 
 
 # 기본값 타이핑 
@@ -780,10 +979,19 @@ const a = (b: { children: string} = { children: 'zerocho'}) => {  }
 
 - 헷갈린다면 타입자리 생략하고 생각해보기
 ## 화살표함수 제네릭과 JSX
-`const add = <T = unknown>(x: T, y: T) = ({ x, y})`
-- 함수선언식에서는 변수 오른쪽에 적지만, 화살표함수는 익명함수이므로 위와같다.
+` const add = <T = unknown>(x: T, y: T) => ({ x, y }) `
+- 함수선언식에서는 파라미터 오른쪽에 적지만, 화살표함수는 익명함수이므로 위와같다.
 - tsconfig.json의 JSX 설정을 none으로 하지않으면 <>엘리먼트로 인식하여 제네릭에 linting이 된다. ->none설정 필요 
 - 제네릭변수 T에 `1.기본값부여 T = unknown`, `2. T extends unknown` `3. <T,> (의도가 불분명해서 비권장)` 로 에러체크를 피한다.
 
 
-출처: [zerocho - 타입스크립트 올인원](#https://www.inflearn.com/course/%ED%83%80%EC%9E%85%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-%EC%98%AC%EC%9D%B8%EC%9B%90-1)
+
+
+<br>
+<br>
+
+### Reference: 
+1. [zerocho - 타입스크립트 올인원](https://www.inflearn.com/course/%ED%83%80%EC%9E%85%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-%EC%98%AC%EC%9D%B8%EC%9B%90-1)
+2. [타입스크립트핸드북](https://joshua1988.github.io/ts/usage/declaration.html#%EC%A0%84%EC%97%AD-%EB%B3%80%EC%88%98%EC%99%80-%EC%A0%84%EC%97%AD-%ED%95%A8%EC%88%98%EC%97%90-%EB%8C%80%ED%95%9C-%ED%83%80%EC%9E%85-%EC%84%A0%EC%96%B8)
+
+3. [Inpa_tisroy](https://inpa.tistory.com/entry/TS-%F0%9F%93%98-%ED%83%80%EC%9E%85%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-Generic-%ED%83%80%EC%9E%85-%EC%A0%95%EB%B3%B5%ED%95%98%EA%B8%B0#%EC%A0%9C%EB%84%A4%EB%A6%ADgenerics_%EC%86%8C%EA%B0%9C)
