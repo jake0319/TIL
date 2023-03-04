@@ -17,6 +17,8 @@ tsc는 tsconfig.json(`npx tsc --init 시 생성`)에 따라 ts 코드를 js(tsc 
 
 # TS 기본 세팅하기
 
+__`Vanilla JS`__
+
  1.`npm init -y`(:yes)  (node 프로젝트 셋팅)
 - 초기 node 프로젝트 세팅(package.json 파일 생성됨)
 
@@ -26,6 +28,16 @@ tsc는 tsconfig.json(`npx tsc --init 시 생성`)에 따라 ts 코드를 js(tsc 
 - `npm` 아니고 `npx` 주의 
 
 - tsconfig.json 타입스크립트 설정파일 생성
+
+<br>
+
+__`React with typescript`__
+
+- CRA로 타입스크립트 쉽게 셋팅하기
+- `npx create-react-app my-app --template typescript`
+
+
+<br>
 
 ## tsconfig.json - 기본옵션들 (자동으로 켜짐)
 > `"esModuleInterop": "true"`, `"strict": "true"`
